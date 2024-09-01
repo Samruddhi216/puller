@@ -1,0 +1,25 @@
+name: Example PR Comment with Date and Time
+
+on:
+  pull_request:
+
+jobs:
+  example_comment_pr:
+    permissions:
+      write: pull_requests
+    runs-on: ubuntu-latest
+    name: An example job to comment a PR with date and time
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get current date and time
+        run: |
+          current_date=$(date '+%Y-%m-%d')
+          current_time=$(date '+%H:%M:%S')
+
+      - name: Comment PR with date and time
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: "Date: $current_date\nTime: $current_time"
+          token: ${{ secrets.GITHUB_TOKEN }}
