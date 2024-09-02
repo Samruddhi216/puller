@@ -1,0 +1,21 @@
+name: On Push
+
+on: [push]
+
+jobs:
+  block-wip-in-commit:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: 'Ensure no WIP in commit messages'
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          commits_url="https://api.github.com/repos/$PR_REPO/pulls/$PR_NUMBER/commits"
+          commit_messages=$(curl -s -H "Authorization: token $TOKEN" $commits_url | jq '.[].commit.message')
+          for message in $commit_messages; do
+            if [[ $message == *"WIP"* ]]; then
+              echo "Found WIP in commit message: $message"
+              exit 1
+            fi
+          done
