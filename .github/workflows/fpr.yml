@@ -1,0 +1,33 @@
+name: Block WIP Commits
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  block-wip-in-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Ensure no WIP in commit messages
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          commits_url="https://api.github.com/repos/$PR_REPO/pulls/$PR_NUMBER/commits"
+          
+          # Fetch commit messages
+          commit_messages=$(curl -s -H "Authorization: token $TOKEN" $commits_url | jq -r '.[].commit.message')
+          
+          # Debugging output
+          echo "$commit_messages"
+          
+          # Check each commit message for "WIP"
+          for message in $commit_messages; do
+            if [[ $message == *"WIP"* ]]; then
+              echo "Found WIP in commit message: $message"
+              exit 1
+            fi
+          done
